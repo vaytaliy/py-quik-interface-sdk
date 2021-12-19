@@ -1,0 +1,74 @@
+Metadata-Version: 2.1
+Name: qlua
+Version: 1.3.0
+Summary: Quik Lua RPC API.
+Home-page: https://gitlab.com/abrosimov.a.a/qlua
+Author: Anton Abrosimov
+Author-email: anton@abrosimov.online
+License: Apache Software License
+Project-URL: Bug Tracker, https://gitlab.com/abrosimov.a.a/qlua/-/issues
+Project-URL: Documentation, https://gitlab.com/abrosimov.a.a/qlua/-/wikis/home
+Project-URL: Source Code, https://gitlab.com/abrosimov.a.a/qlua
+Keywords: quik-lua-rpc,quik,arqa,trading,protobuf,zeromq
+Platform: UNKNOWN
+Classifier: Development Status :: 4 - Beta
+Classifier: Topic :: Communications
+Classifier: Topic :: Office/Business :: Financial
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: License :: OSI Approved :: Apache Software License
+Requires-Python: >=3.6.0
+Description-Content-Type: text/markdown
+Requires-Dist: wheel
+Requires-Dist: protobuf (<4,>=3.7.1)
+Requires-Dist: pyzmq
+
+Qlua (Quik LUA RPC Python)
+==========================
+
+[![pipeline status](https://gitlab.com/abrosimov.a.a/qlua/badges/master/pipeline.svg)](https://gitlab.com/abrosimov.a.a/qlua/-/commits/master)
+<!---[![coverage report](https://gitlab.com/abrosimov.a.a/qlua/badges/master/coverage.svg)](https://gitlab.com/abrosimov.a.a/qlua/-/commits/master)-->
+
+[Python](https://ru.wikipedia.org/wiki/Python) API
+для торгового терминала [Quik](https://arqatech.com/ru/products/quik/).
+Представляет собой клиентскую часть для [Quik LUA RPC](https://github.com/Enfernuz/quik-lua-rpc).
+
+Принцип работы
+--------------
+
+* Терминал [Quik](https://arqatech.com/ru/products/quik/) предоставляет API для языка программирования LUA.
+* Проект [Quik LUA RPC](https://github.com/Enfernuz/quik-lua-rpc) позволяет обращаться к Quik LUA API, через сетевое подключение.
+[ZeroMQ](https://zeromq.org/) обеспечивает передачу данных по сети и аутентификацию.
+[Protocol Buffers](https://developers.google.com/protocol-buffers) позволяет программам, написанным на разных языках программирования, быстро обмениваться данными.
+* Проект Qlua, описание которого вы читаете, позволяет взаимодействовать с Quik LUA RPC из языка программирования Python.
+* Таким образом ваш код на Python взаимодействует с API Quik.
+
+Установка
+---------
+
+1. Установите пакет `qlua`:
+   ```sh
+   pip install qlua
+   ```
+2. Можно пользоваться API.
+   * Примеры использования [qlua/examples](https://gitlab.com/abrosimov.a.a/qlua/-/tree/master/qlua/examples)
+   * Интерфейс командной строки можно вызвать используя:
+     ```sh
+     python -m qlua -h
+     ```
+
+**Внимание!** Для работы CLI (интерфейса командной строки) требуется:
+
+  * `python >= 3.7.0`
+  * Для `python < 3.8.0` необходимо установить [MyPy](https://github.com/python/mypy):
+    ```sh
+    pip install mypy
+    ```
+
+Документация
+------------
+
+* Более подробная документация находится в [Wiki](https://gitlab.com/abrosimov.a.a/qlua/-/wikis/home).
+
+
