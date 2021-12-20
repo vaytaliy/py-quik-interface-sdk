@@ -1,5 +1,6 @@
 """
-This serves as an example class
+This serves as an example,
+will save logs to a file
 """
 import queue, threading
 

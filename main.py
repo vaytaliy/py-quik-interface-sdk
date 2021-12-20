@@ -50,18 +50,13 @@ m.create_new_data_source(
                 security_code = 'MGNT')
 )
 
+time.sleep(180)
+"""
+After 3 mins of execution this stock will be removed and will no longer receive new updates
+"""
+m.remove_datasource('QJSIMMGNT')
+
 while True:
         print("main thread isn't blocked and you can still receive updates")
         time.sleep(45)
-
-#m.remove_datasource('QJSIMMGNT')
-
-"""
-tells to stop receiving more updates, this can be reverted later by invoking start_updates function
-"""
-time.sleep(2)
-#m.stop_updates() 
-
-
-print("main thread isn't blocked")
 
