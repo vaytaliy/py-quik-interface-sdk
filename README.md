@@ -1,4 +1,3 @@
-# quik-trading-bot
 # This is an SDK to support development of trading bots for QUIK terminal
 
 ## Features:
