@@ -14,7 +14,7 @@
 1. Python 3 +
 2. QUIK terminal
 3. Active QUIK account: quik junior or regular account (quick junior is used for learning/trading with imaginary money, can be obtained here https://arqatech.com/en/support/demo/)
-4. All the necessary scripts to allow QUIK to work with external scripts. More information on how to set that up : https://github.com/Enfernuz/quik-lua-rpc/blob/master/docs/python_zmq_protobuf.md
+4. All the necessary files to put into QUIK installation folder and other information on how to set everything up can be followed here (RUS): https://github.com/Enfernuz/quik-lua-rpc/blob/master/docs/python_zmq_protobuf.md
 
 ## Example output (powershell):
 
