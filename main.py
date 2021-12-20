@@ -1,6 +1,6 @@
-import dotenv
 from src import reqrep_message as msgr
 from dotenv import dotenv_values
+from src.batch_processor import FileBatchProcessor
 config = dotenv_values(".env")
 
 import time
@@ -9,22 +9,32 @@ m = msgr.QuikInterface(url=config["CONN_URL"],
         user=config["USER"],
         password=config["PASSWORD"],
         encoding='utf8',
-        update_interval=1) #interval 1 doesn't work right for test accounts
+        update_interval=2) #interval 1 doesn't work right for test accounts
 
+"""
+Example batch processor which will save ticker update logs into .txt
+"""
+batch_processor = FileBatchProcessor()
 """
 This example function allows you to have your custom handlers for price changes/errors
 It will receive those updates perpetually until QuikInterface instance receives a command
 to stop updates from happening, this can be reverted to get updates again
 """
 def handle_securities():
+        
         def on_ticker_update(security_combo : str, price : str, update_timestamp : str):
-                print(f"[{update_timestamp}] ticker security update {security_combo} : {price}" )
+                print(f"UPDATE [{update_timestamp}] {security_combo} : {price}" )
+                batch_processor.add_text_to_log(f"[{update_timestamp}]:{security_combo}:{price} ")
 
-        def on_ticker_error(error_type : str, error_message : str):
-                print(f"error {error_type} : {error_message}" )
+        def on_ticker_error(error_type : str, error_message : str, error_timestamp : str):
+                print(f"ERROR [{error_timestamp}] {error_type} : {error_message}" )
+
+        def on_info(info_type : str, info_details : str, info_timestamp: str):
+                print(f"INFO [{info_timestamp}] {info_type} : {info_details}")
 
         m.event_listener.set_event_listener("ticker-update", on_ticker_update)
         m.event_listener.set_event_listener("error", on_ticker_error)
+        m.event_listener.set_event_listener("info", on_info)
 
 handle_securities()
 
@@ -40,15 +50,17 @@ m.create_new_data_source(
                 security_code = 'MGNT')
 )
 
-time.sleep(2)
+while True:
+        print("main thread isn't blocked and you can still receive updates")
+        time.sleep(45)
 
-m.remove_datasource('QJSIMMGNT')
+#m.remove_datasource('QJSIMMGNT')
 
 """
 tells to stop receiving more updates, this can be reverted later by invoking start_updates function
 """
-time.sleep(3)
-m.stop_updates() 
+time.sleep(2)
+#m.stop_updates() 
 
 
 print("main thread isn't blocked")

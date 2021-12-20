@@ -1,8 +1,10 @@
+import threading
 import zmq
 import time
 from threading import Thread
 from pymitter import EventEmitter
-from enum import Enum
+from zmq import error
+import src.errors as errors
 from datetime import datetime
 
 from qlua.rpc import RPC_pb2, datasource
@@ -41,6 +43,7 @@ class QuikInterface(Thread):
 
     def __init__(self, url, user, password, encoding, update_interval) -> None:
         Thread.__init__(self)
+        self.event_listener = EventListener(EventEmitter())
         self.daemon: bool = False
         self.prevent_updates : bool = False
         self.update_interval: int = update_interval
@@ -50,18 +53,21 @@ class QuikInterface(Thread):
         self.encoding: str = encoding
         self.existing_data_objects : dict[str, Security] = {} 
         self.create_connection()
-        self.event_listener = EventListener(EventEmitter())
         self.start()
 
 
     def create_connection(self):
-        self.ctx = zmq.Context.instance()
-        self.socket = self.ctx.socket(zmq.REQ)  
-        self.socket.setsockopt(zmq.RCVTIMEO, 5000) 
-        self.socket.plain_username = self.user.encode(self.encoding)
-        self.socket.plain_password = self.password.encode(self.encoding)
-       
-        self.socket.connect(self.url)
+        try:
+            self.ctx = zmq.Context.instance()
+            self.socket = self.ctx.socket(zmq.REQ)  
+            self.socket.setsockopt(zmq.RCVTIMEO, 5000) 
+            self.socket.plain_username = self.user.encode(self.encoding)
+            self.socket.plain_password = self.password.encode(self.encoding)
+
+            self.socket.connect(self.url)
+            self.event_listener.event.emit("info", "general", f"Successfully stablished connection to QUIK terminal", self.get_timestamp_now())
+        except Exception as e:
+            self.event_listener.event.emit("error", errors.ERR_QUIK_CONNECTION, f"Error connecting to QUIK terminal {str(e)}", self.get_timestamp_now())
 
     """
     Creates new datasource if such is not found in existing datasources dictionary
@@ -74,8 +80,7 @@ class QuikInterface(Thread):
     """
 
     def create_new_data_source(self, data_object : Security):
-
-        print(f"Attempting to create new data source for {data_object.class_code} class code and {data_object.security_code} security code..")
+        self.event_listener.event.emit("info", "general", f"Attempting to create new data source for {data_object.class_code} class code and {data_object.security_code} security code..", self.get_timestamp_now())
         args = datasource.CreateDataSource_pb2.Args(
             class_code = data_object.class_code,
             sec_code = data_object.security_code,
@@ -98,7 +103,7 @@ class QuikInterface(Thread):
             msg.ParseFromString(resp.result)
 
             if msg.error_desc != '':
-                self.event_listener.event.emit("error", "err", f"Error creating data source listener: {msg.error_desc}")
+                self.event_listener.event.emit("error", errors.ERR_DATASOURCE_REGISTRATION, f"Error creating data source listener: {msg.error_desc}", self.get_timestamp_now())
                 return
 
             if msg.datasource_uuid != '' and msg.datasource_uuid is not None:
@@ -108,12 +113,12 @@ class QuikInterface(Thread):
 
                 self.set_empty_callback_for_source(data_object)
                 self.existing_data_objects[data_object.class_code_security_combo] = data_object
+                
             else:
-                self.event_listener.event.emit("error", "err", "DataSource couldn't be created, try restarting QUIK")
-
+                self.event_listener.event.emit("error", errors.ERR_DATASOURCE_REGISTRATION, f"DataSource couldn't be created, try restarting QUIK. Datasource uuid was empty")
+            self.event_listener.event.emit("info", "general", f"Successfully established datasource exchange for {data_object.class_code_security_combo}", self.get_timestamp_now())
         except:       
-            self.event_listener.event.emit("error", "err", f"Failed fetching info on {data_object.class_code_security_combo}.Unable to interface with QUIK terminal.. Check if QUIK is open and retry to run script")
-            self.prevent_updates = True
+            self.event_listener.event.emit("error", errors.ERR_DATASOURCE_REGISTRATION, f"Failed fetching info on {data_object.class_code_security_combo}.Unable to interface with QUIK terminal.. Check if QUIK is open and retry to run script", self.get_timestamp_now())
 
     """
     Gets candle size, takes max element
@@ -168,9 +173,9 @@ class QuikInterface(Thread):
 
             msg = datasource.SetEmptyCallback_pb2.Result()
             msg.ParseFromString(resp.result)
-        except:
-            self.handle_post_exception()
-            self.event_listener.event.emit("error", f"error setting callback for {data_object.class_code_security_combo}")
+            self.event_listener.event.emit("info", "general", f"Successfully set callback for datasource {data_object.class_code_security_combo}", self.get_timestamp_now())
+        except Exception as e:
+            self.event_listener.event.emit("error", errors.ERR_DATASOURCE_REGISTRATION, f"error setting callback for {data_object.class_code_security_combo}. {str(e)}", self.get_timestamp_now())
 
     """
     Removes datasource obj from dict
@@ -183,12 +188,12 @@ class QuikInterface(Thread):
     def update_loop(self, data_source_security_combo : str):
 
         data_source = self.existing_data_objects[data_source_security_combo]
-        self.set_empty_callback_for_source(data_source)
+        #self.set_empty_callback_for_source(data_source)
 
         upd_candle_size = self.get_candle_size(data_source.class_code_security_combo)
 
         if upd_candle_size == -1:
-            self.event_listener.event.emit("error", "err", f"Unable to get price range for {data_source.class_code_security_combo}")
+            self.event_listener.event.emit("error", errors.ERR_INCORRECT_CANDLE, f"Unable to get price range for {data_source.class_code_security_combo}", self.get_timestamp_now())
             return
 
         args = datasource.O_pb2.Args(
@@ -212,29 +217,34 @@ class QuikInterface(Thread):
             msg = datasource.O_pb2.Result()
             msg.ParseFromString(resp.result)
 
-            upd_time_obj = datetime.now()
-            update_timestamp = upd_time_obj.strftime("%Y-%m-%dT%H:%M:%S")
-            self.event_listener.event.emit("ticker-update", data_source.class_code_security_combo, msg.value, update_timestamp)    
+            self.event_listener.event.emit("ticker-update", data_source.class_code_security_combo, msg.value, self.get_timestamp_now())    
             
         except Exception as e:
-            self.event_listener.event.emit("error", f"error updating candle for {data_source.class_code_security_combo} {str(e)}", "err")
-            self.handle_post_exception()
+            self.event_listener.event.emit("error", errors.ERR_INCORRECT_CANDLE ,f"error updating candle for {data_source.class_code_security_combo} {str(e)}", self.get_timestamp_now())
+
+    def get_timestamp_now(self) -> str:
+        upd_time_obj = datetime.now()
+        update_timestamp = upd_time_obj.strftime("%Y-%m-%dT%H:%M:%S.%f'")[:-3]
+        return update_timestamp
 
     def run(self):
-        #iters = 0 #FOR TESTING
-        while self.prevent_updates is False:
-            #iters += 1#FOR TESTING
+        self.listen()
+
+    def listen(self):
+        while self.prevent_updates is False:              
             for data_object in self.existing_data_objects.values():
-                security_class = data_object.class_code_security_combo
-                self.update_loop(security_class)
+                try:
+                    security_class = data_object.class_code_security_combo
+                    self.update_loop(security_class)
+                except KeyboardInterrupt:
+                    print("interrupt")
             time.sleep(INTERVAL_DURATION.get(self.update_interval) / 1000)
-                #if iters == 30:#FOR TESTING
-                #    self.stop_updates()#FOR TESTING
-        
+
     def stop_updates(self):
+        self.event_listener.event.emit("info", "general", f"Stopped updates for datasources", self.get_timestamp_now())
         self.prevent_updates = True
-        
     
     def start_updates(self):
+        self.event_listener.event.emit("info", "general", f"Started updates for datasources", self.get_timestamp_now())
         self.prevent_updates = False
         self.run()
