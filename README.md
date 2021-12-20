@@ -2,12 +2,12 @@
 # This is an SDK to support development of trading bots for QUIK terminal
 
 ## Features:
-1. Tracking price changes of multiple securities in real time
+1. Tracking price changes of multiple securities in real time at a specified update rate
 2. Securities can be removed and added from tracking
-3. Price changes are sent to event listener function specified by user, where user can process these events and add logic on top
-4. Error messages are also received are events so that user can understand what went wrong in the process
+3. Price changes are sent to event listener function specified by user, so that user can listen to these events and execute logic on top
+4. Error messages are also received as events, so that user can understand what went wrong in the code
 5. Event emitter and security tracker run in parallel without blocking the main thread
-6. Security tracker is running perpetually until the program is terminated. This is a non-daemon thread and the only way to stop it is to invoke stop_updates method somewhere in the code
+6. Security tracker constructor accepts optional is_daemon property, which will signal end of refresh execution once main thread is not alive. By default it is false, the only way to stop updates from executing is by invoking stop_updates method
 
 ## Prerequisites:
 
