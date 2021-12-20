@@ -1,5 +1,4 @@
 from threading import Thread
-import asyncio
 
 from pymitter import EventEmitter
 

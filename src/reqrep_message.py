@@ -1,9 +1,7 @@
-import threading
 import zmq
 import time
 from threading import Thread
 from pymitter import EventEmitter
-from zmq import error
 import src.errors as errors
 from datetime import datetime
 
@@ -41,10 +39,10 @@ class QuikInterface(Thread):
     ctx : Context = None
     socket = None
 
-    def __init__(self, url, user, password, encoding, update_interval) -> None:
+    def __init__(self, url, user, password, encoding, update_interval, is_daemon = False) -> None:
         Thread.__init__(self)
         self.event_listener = EventListener(EventEmitter())
-        self.daemon: bool = False
+        self.daemon: bool = is_daemon
         self.prevent_updates : bool = False
         self.update_interval: int = update_interval
         self.url: str = url

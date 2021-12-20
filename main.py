@@ -9,7 +9,8 @@ m = msgr.QuikInterface(url=config["CONN_URL"],
         user=config["USER"],
         password=config["PASSWORD"],
         encoding='utf8',
-        update_interval=2) #interval 1 doesn't work right for test accounts
+        update_interval=2
+        ) #interval 1 doesn't work right for test accounts
 
 """
 Example batch processor which will save ticker update logs into .txt

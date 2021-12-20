@@ -18,3 +18,4 @@
 
 ##Example output (powershell):
 
+![PS output](/assets/py_quik.PNG "Output sample")
