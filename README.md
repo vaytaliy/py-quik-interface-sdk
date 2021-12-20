@@ -16,6 +16,6 @@
 3. Active QUIK account: quik junior or regular account (quick junior is used for learning/trading with imaginary money, can be obtained here https://arqatech.com/en/support/demo/)
 4. All the necessary scripts to allow QUIK to work with external scripts. More information on how to set that up : https://github.com/Enfernuz/quik-lua-rpc/blob/master/docs/python_zmq_protobuf.md
 
-##Example output (powershell):
+## Example output (powershell):
 
 ![PS output](/assets/py_quik.PNG "Output sample")
